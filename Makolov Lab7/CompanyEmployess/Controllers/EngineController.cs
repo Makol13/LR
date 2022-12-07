@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace CompanyEmployess.Controllers
 {
@@ -30,7 +31,7 @@ namespace CompanyEmployess.Controllers
         public IActionResult GetEngines()
         {
            
-                var engines = _repository.Engine.GetAllEngines(trackChanges: false);
+                var engines = _repository.Engine.GetAllEnginesAsync(trackChanges: false);
                 var enginesDto = _mapper.Map<IEnumerable<EngineDto>>(engines);
                 return Ok(enginesDto);       
         }
@@ -39,7 +40,7 @@ namespace CompanyEmployess.Controllers
         [HttpGet("{id}", Name = "EngineById")]
         public IActionResult GetEngine(Guid id)
         {
-            var engine = _repository.Engine.GetEngine(id, trackChanges: false);
+            var engine = _repository.Engine.GetEngineAsync(id, trackChanges: false);
             if (engine == null)
             {
                 _logger.LogInfo($"Engine with id: {id} doesn't exist in the database.");
@@ -73,7 +74,7 @@ namespace CompanyEmployess.Controllers
         }
 
         [HttpGet("collection/({ids})", Name = "EngineCollection")]
-        public IActionResult GetEngineCollection([ModelBinder(BinderType =typeof(ArrayModelBinder))] IEnumerable<Guid> ids)
+        public async Task<IActionResult> GetEngineCollectionAsync([ModelBinder(BinderType =typeof(ArrayModelBinder))] IEnumerable<Guid> ids)
         {
             if (ids == null)
             {
@@ -82,7 +83,7 @@ namespace CompanyEmployess.Controllers
             }
 
             
-            var engineEntities = _repository.Engine.GetByIds(ids, trackChanges: false);
+            var engineEntities =await _repository.Engine.GetByIdsAsync(ids, trackChanges: false);
             if (ids.Count() != engineEntities.Count())
             {
                 _logger.LogError("Some ids are not valid in a collection");
@@ -121,16 +122,16 @@ namespace CompanyEmployess.Controllers
         }
 
         [HttpDelete("{id}")]
-        public IActionResult DeleteEngine(Guid id)
+        public async Task<IActionResult> DeleteEngine(Guid id)
         {
-            var engine = _repository.Engine.GetEngine(id, trackChanges: false);
+            var engine = await _repository.Engine.GetEngineAsync(id, trackChanges: false);
             if (engine == null)
             {
                 _logger.LogInfo($"Company with id: {id} doesn't exist in the database.");
                 return NotFound();
             }
             _repository.Engine.DeleteEngine(engine);
-            _repository.Save();
+            _repository.SaveAsync();
             return NoContent();
         }
 
@@ -143,14 +144,14 @@ namespace CompanyEmployess.Controllers
             _logger.LogError("CompanyForUpdateDto object sent from client is null.");
                 return BadRequest("CompanyForUpdateDto object is null");
             }
-            var engineEntity = _repository.Engine.GetEngine(id, trackChanges: true);
+            var engineEntity = _repository.Engine.GetEngineAsync(id, trackChanges: true);
             if (engineEntity == null)
             {
                 _logger.LogInfo($"Company with id: {id} doesn't exist in the database.");
                 return NotFound();
             }
             _mapper.Map(engine, engineEntity);
-            _repository.Save();
+            _repository.SaveAsync();
             return NoContent();
         }
     }

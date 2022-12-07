@@ -11,9 +11,9 @@ namespace Contracts
 {
     public interface ICarRepository
     {
-        public IEnumerable<Car> GetCars(Guid companyId, bool trackChanges);
+        Task<IEnumerable<Car>> GetAllCarAsync(Guid engineId,bool trackChanges);
 
-        public Car GetCar(Guid companyId, Guid id, bool trackChanges);
+        Task<Car> GetCarAsync(Guid engineId,Guid id, bool trackChanges);
 
         void CreateCarForEngine(Guid engineId, Car car);
 

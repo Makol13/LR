@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace CompanyEmployess.Controllers
 {
@@ -30,7 +31,7 @@ namespace CompanyEmployess.Controllers
         [HttpGet]
         public IActionResult GetCarsForEngine(Guid engineId)
         {
-            var engine = _repository.Engine.GetEngine(engineId, trackChanges: false);
+            var engine = _repository.Engine.GetEngineAsync(engineId, trackChanges: false);
             if (engine == null)
             {
                 _logger.LogInfo($"Company with id: {engineId} doesn't exist in the database.");
@@ -40,7 +41,7 @@ namespace CompanyEmployess.Controllers
 
             
 
-            var engines = _repository.Car.GetCars(engineId, trackChanges: false);
+            var engines = _repository.Car.GetAllCarAsync(engineId, trackChanges: false);
             var enginesDto = _mapper.Map<IEnumerable<CarDto>>(engines);
             return Ok(enginesDto);
         }
@@ -50,14 +51,14 @@ namespace CompanyEmployess.Controllers
 
         public IActionResult GetCarForEngine(Guid engineId, Guid id)
         {
-            var engine = _repository.Engine.GetEngine(engineId, trackChanges: false);
+            var engine = _repository.Engine.GetEngineAsync(engineId, trackChanges: false);
             if (engine == null)
             {
                 _logger.LogInfo($"Company with id: {engineId} doesn't exist in thedatabase.");
                 return NotFound();
             }
             
-            var carFromDb = _repository.Car.GetCar(engineId, id, trackChanges: false);
+            var carFromDb = _repository.Car.GetCarAsync(engineId, id, trackChanges: false);
             if (carFromDb == null)
             {
                 _logger.LogInfo($"Employee with id: {id} doesn't exist in the database.");
@@ -81,7 +82,7 @@ namespace CompanyEmployess.Controllers
                 _logger.LogError("Invalid model state for the EmployeeForCreationDtoobject");
                 return UnprocessableEntity(ModelState);
             }
-            var engine = _repository.Engine.GetEngine(engineId, trackChanges: false);
+            var engine = _repository.Engine.GetEngineAsync(engineId, trackChanges: false);
             if (engine == null)
             {
                 _logger.LogInfo($"Company with id: {engineId} doesn't exist in thedatabase.");
@@ -100,16 +101,16 @@ namespace CompanyEmployess.Controllers
         }
 
         [HttpDelete("{id}")]
-        public IActionResult DeleteCarForEngine(Guid engineId, Guid id)
+        public async Task<IActionResult> DeleteCarForEngine(Guid engineId, Guid id)
         {
-            var car = _repository.Car.GetCars(engineId, trackChanges: false);
+            var car = await _repository.Car.GetAllCarAsync(engineId, trackChanges: false);
             if (car == null)
             {
                 _logger.LogInfo($"Company with id: {engineId} doesn't exist in thedatabase.");
             return NotFound();
             }
            
-            var carForEngine = _repository.Car.GetCar(engineId, id, trackChanges: false);
+            var carForEngine = await _repository.Car.GetCarAsync(engineId, id, trackChanges: false);
             if (carForEngine == null)
             {
                 _logger.LogInfo($"Employee with id: {id} doesn't exist in thedatabase.");
@@ -123,7 +124,7 @@ namespace CompanyEmployess.Controllers
 
 
         [HttpPut("{id}")]
-        public IActionResult UpdateCarForEnginey(Guid engineId, Guid id, [FromBody]CarForUpdateDto car)
+        public IActionResult UpdateCarForEngine(Guid engineId, Guid id, [FromBody]CarForUpdateDto car)
         {
             if (car == null)
             {
@@ -135,13 +136,13 @@ namespace CompanyEmployess.Controllers
                 _logger.LogError("Invalid model state for the EmployeeForCreationDtoobject");
                 return UnprocessableEntity(ModelState);
             }
-            var engine = _repository.Engine.GetEngine(engineId, trackChanges: false);
+            var engine = _repository.Engine.GetEngineAsync(engineId, trackChanges: false);
             if (engine == null)
             {
                 _logger.LogInfo($"Company with id: {engineId} doesn't exist in thedatabase.");
             return NotFound();
             }
-            var carEntity = _repository.Car.GetCar(engineId, id,trackChanges: true);
+            var carEntity = _repository.Car.GetCarAsync(engineId, id,trackChanges: true);
             if (carEntity == null)
             {
                 _logger.LogInfo($"Employee with id: {id} doesn't exist in thedatabase.");
@@ -166,18 +167,15 @@ namespace CompanyEmployess.Controllers
                 _logger.LogError("patchDoc object sent from client is null.");
                 return BadRequest("patchDoc object is null");
             }
-            if (!ModelState.IsValid)
-            {
-                _logger.LogError("Invalid model state for the EmployeeForCreationDtoobject");
-                return UnprocessableEntity(ModelState);
-            }
-            var engine = _repository.Engine.GetEngine(engineId, trackChanges: false);
+            
+           
+            var engine = _repository.Engine.GetEngineAsync(engineId, trackChanges: false);
             if (engine == null)
             {
                 _logger.LogInfo($"Company with id: {engineId} doesn't exist in thedatabase.");
             return NotFound();
             }
-            var carEntity = _repository.Car.GetCar(engineId, id,trackChanges:true);
+            var carEntity = _repository.Car.GetCarAsync(engineId, id,trackChanges:true);
             if (carEntity == null)
             {
                 _logger.LogInfo($"Employee with id: {id} doesn't exist in the database.");
@@ -189,7 +187,13 @@ namespace CompanyEmployess.Controllers
                 return UnprocessableEntity(ModelState);
             }
             var carToPatch = _mapper.Map<CarForUpdateDto>(carEntity);
-            patchDoc.ApplyTo(carToPatch);          
+            patchDoc.ApplyTo(carToPatch);
+            TryValidateModel(carToPatch);
+            if (!ModelState.IsValid)
+            {
+                _logger.LogError("Invalid model state for the EmployeeForCreationDtoobject");
+                return UnprocessableEntity(ModelState);
+            }
             _mapper.Map(carToPatch, carEntity);
             _repository.Save();
             return NoContent();

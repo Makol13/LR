@@ -1,6 +1,7 @@
 ﻿using Contracts;
 using Entities;
 using Entities.Models;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,9 +18,12 @@ namespace Repository
         {
         }
 
-        public IEnumerable<Car> GetCars(Guid EngineId, bool trackChanges) => FindByCondition(e => e.EngineId.Equals(EngineId), trackChanges).OrderBy(e => e.CarName);
+        public async Task<IEnumerable<Car>> GetAllCarAsync(Guid engineId, bool trackChanges) => 
+            await FindByCondition(e=>e.Id.Equals(engineId),trackChanges).OrderBy(c => c.CarName).ToListAsync();
 
-        public  Car GetCar(Guid engineId, Guid id, bool trackChanges) =>FindByCondition(e => e.EngineId.Equals(engineId) && e.Id.Equals(id),trackChanges).SingleOrDefault();
+        public async Task<Car> GetCarAsync(Guid engineId, Guid id, bool trackChanges) => 
+            await FindByCondition(e => e.EngineId.Equals(engineId) && 
+            e.Id.Equals(id), trackChanges).SingleOrDefaultAsync();
 
 
         public void CreateCarForEngine(Guid engineId, Car car)

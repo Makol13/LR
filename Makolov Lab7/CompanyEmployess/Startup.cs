@@ -40,11 +40,11 @@ namespace CompanyEmployess
                 config.ReturnHttpNotAcceptable = true;
                 config.RespectBrowserAcceptHeader = true;
             }).AddNewtonsoftJson().AddXmlDataContractSerializerFormatters().AddCustomCSVFormatter();
-
             services.Configure<ApiBehaviorOptions>(options =>
             {
                 options.SuppressModelStateInvalidFilter = true;
             });
+
         }
     
 

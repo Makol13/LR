@@ -14,5 +14,6 @@ namespace Contracts
         ICarRepository Car { get; }
         IEngineRepository Engine { get; }
         void Save();
+        Task SaveAsync();
     }
 }
